@@ -91,6 +91,35 @@ public class FileUtils {
         return result;
     }
 
+    public static Integer getFileSize(Uri uri, final Context context) {
+        Integer result = null;
+
+        try {
+
+            if (uri.getScheme().equals("content")) {
+                Cursor cursor = context.getContentResolver().query(uri, new String[]{OpenableColumns.SIZE}, null, null, null);
+                try {
+                    if (cursor != null && cursor.moveToFirst()) {
+                        result = cursor.getInt(cursor.getColumnIndexOrThrow(OpenableColumns.SIZE));
+                    }
+                } finally {
+                    cursor.close();
+                }
+            }
+//            if (result == null) {
+//                result = uri.getPath();
+//                int cut = result.lastIndexOf('/');
+//                if (cut != -1) {
+//                    result = result.substring(cut + 1);
+//                }
+//            }
+        } catch (Exception ex){
+            Log.e(TAG, "Failed to handle file name: " + ex.toString());
+        }
+
+        return result;
+    }
+
 
     public static Uri compressImage(Uri originalImageUri, int compressionQuality, Context context) {
         Uri compressedUri;
@@ -292,56 +321,58 @@ public class FileUtils {
 
     public static FileInfo openFileStream(final Context context, final Uri uri, boolean withData) {
 
-        Log.i(TAG, "Caching from URI: " + uri.toString());
-        FileOutputStream fos = null;
+//        Log.i(TAG, "Caching from URI: " + uri.toString());
+//        FileOutputStream fos = null;
         final FileInfo.Builder fileInfo = new FileInfo.Builder();
         final String fileName = FileUtils.getFileName(uri, context);
-        final String path = context.getCacheDir().getAbsolutePath() + "/file_picker/"+System.currentTimeMillis() +"/"+ (fileName != null ? fileName : "unamed");
+//        final String path = context.getCacheDir().getAbsolutePath() + "/file_picker/"+System.currentTimeMillis() +"/"+ (fileName != null ? fileName : "unamed");
 
-        final File file = new File(path);
+//        final File file = new File(path);
 
-        if(!file.exists()) {
-            file.getParentFile().mkdirs();
-            try {
-                fos = new FileOutputStream(path);
-                try {
-                    final BufferedOutputStream out = new BufferedOutputStream(fos);
-                    final InputStream in = context.getContentResolver().openInputStream(uri);
+//        if(!file.exists()) {
+//            file.getParentFile().mkdirs();
+//            try {
+//                fos = new FileOutputStream(path);
+//                try {
+//                    final BufferedOutputStream out = new BufferedOutputStream(fos);
+//                    final InputStream in = context.getContentResolver().openInputStream(uri);
+//
+//                    final byte[] buffer = new byte[8192];
+//                    int len = 0;
+//
+//                    while ((len = in.read(buffer)) >= 0) {
+//                        out.write(buffer, 0, len);
+//                    }
+//
+//                    out.flush();
+//                } finally {
+//                    fos.getFD().sync();
+//                }
+//            } catch (final Exception e) {
+//                try {
+//                    fos.close();
+//                } catch (final IOException | NullPointerException ex) {
+//                    Log.e(TAG, "Failed to close file streams: " + e.getMessage(), null);
+//                    return null;
+//                }
+//                Log.e(TAG, "Failed to retrieve path: " + e.getMessage(), null);
+//                return null;
+//            }
+//        }
 
-                    final byte[] buffer = new byte[8192];
-                    int len = 0;
+//        Log.d(TAG, "File loaded and cached at:" + path);
 
-                    while ((len = in.read(buffer)) >= 0) {
-                        out.write(buffer, 0, len);
-                    }
+//        if(withData) {
+//            loadData(file, fileInfo);
+//        }
 
-                    out.flush();
-                } finally {
-                    fos.getFD().sync();
-                }
-            } catch (final Exception e) {
-                try {
-                    fos.close();
-                } catch (final IOException | NullPointerException ex) {
-                    Log.e(TAG, "Failed to close file streams: " + e.getMessage(), null);
-                    return null;
-                }
-                Log.e(TAG, "Failed to retrieve path: " + e.getMessage(), null);
-                return null;
-            }
-        }
-
-        Log.d(TAG, "File loaded and cached at:" + path);
-
-        if(withData) {
-            loadData(file, fileInfo);
-        }
+        final Integer size = getFileSize(uri, context);
 
         fileInfo
-                .withPath(path)
+                .withPath("")
                 .withName(fileName)
                 .withUri(uri)
-                .withSize(Long.parseLong(String.valueOf(file.length())));
+                .withSize(size);
 
         return fileInfo.build();
     }
