@@ -296,6 +296,8 @@ public class FilePickerDelegate implements PluginRegistry.ActivityResultListener
             }
         }
 
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+
         if (intent.resolveActivity(this.activity.getPackageManager()) != null) {
             this.activity.startActivityForResult(Intent.createChooser(intent, null), REQUEST_CODE);
         } else {
